@@ -1,0 +1,14 @@
+{
+	"name": "Rukkaz Roblox Web API SDK",
+	"tree": {
+		"$className": "DataModel",
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"$ignoreUnknownInstances": true,
+			"Rukkaz Roblox Web API SDK" : {
+				"$path": "src",
+				"$ignoreUnknownInstances": false
+			}
+		}
+	}
+}
