@@ -60,10 +60,11 @@ RukkazAPI.ERR_RESERVE_SERVER_FAILED = "ErrReserveServerFailed"
 
 RukkazAPI.ERR_PLACE_ID_INVALID = "ErrPlaceIdInvalid"
 
-function RukkazAPI.loadEnvironment(name, useMainToken)
+function RukkazAPI.loadEnvironment(name)
 	assert(typeof(name) == "string", "name should be a string")
 	local environment = assert(RukkazAPI.Environments[name], "No such environment: " .. name)
 	local urlBase = assert(environment.urlBase, "Environment missing urlBase")
+	local useMainToken = RukkazAPI.isOfficial()
 	if useMainToken then
 		return Promise.new(function (resolve, _reject, _onCancel)
 			resolve(require(assert(environment.mainTokenAssetId, "Environment missing mainTokenAssetId")))
@@ -84,11 +85,11 @@ function RukkazAPI.isOfficial()
 end
 
 function RukkazAPI.production()
-	return RukkazAPI.loadEnvironment("Production", RukkazAPI.isOfficial())
+	return RukkazAPI.loadEnvironment("Production")
 end
 
 function RukkazAPI.staging()
-	return RukkazAPI.loadEnvironment("Staging", RukkazAPI.isOfficial())
+	return RukkazAPI.loadEnvironment("Staging")
 end
 
 function RukkazAPI.new(urlBase, mainToken)
