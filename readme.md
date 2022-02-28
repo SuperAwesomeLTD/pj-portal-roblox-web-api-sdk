@@ -1,4 +1,4 @@
-# Rukkaz Roblox Web API SDK
+# PopJam Portal Roblox Web API SDK
 
 ## Installation
 
