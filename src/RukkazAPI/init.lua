@@ -436,7 +436,7 @@ do -- Events
 						return Promise.reject(RukkazAPI.ERR_RESERVE_SERVER_FAILED)
 					end):andThen(function (privateServerAccessCode, privateServerId)
 						return self:setTeleportDetailsForEvent(eventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
-							return Promise.resolve(placeId)
+							return Promise.resolve(placeId, eventId, privateServerId, privateServerAccessCode)
 						end)
 					end)
 				end)
