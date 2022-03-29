@@ -7,8 +7,8 @@ function UserStatusResult.new(event, username, payload)
 	assert(event, "event expected")
 	assert(typeof(username) == "string" and username:len() > 0, "username must be nonempty string")
 	assert(typeof(payload) == "table", "payload must be a table")
-	assert(typeof(payload["completed"]) == "boolean", "payload must include boolean \"registered\"")
-	assert(typeof(payload["completed"]) == "boolean", "payload must include boolean \"verified\"")
+	assert(typeof(payload["registered"]) == "boolean", "payload must include boolean \"registered\"")
+	assert(typeof(payload["verified"]) == "boolean", "payload must include boolean \"verified\"")
 	local self = setmetatable({
 		event = event;
 		username = username;
