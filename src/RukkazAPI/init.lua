@@ -26,7 +26,7 @@ RukkazAPI.Environments = {
 		mainTokenAssetId = 7650250675;
 	};
 	["Staging"] = {
-		urlBase = "https://sa-rukkaz-gamewithme-integrations.staging.rukkaz.com";
+		urlBase = "https://api.gwm.staging.popjam.com";
 		mainTokenAssetId = 7650254239;
 	};
 }
