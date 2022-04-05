@@ -254,6 +254,8 @@ do -- Events
 		end
 
 		function PopJamAPI:getUserStatusForEventAsync(robloxUserId, eventId)
+			assert(lib.isRobloxUserId(robloxUserId), "Invalid Roblox User Id")
+			assert(RunService:IsServer())
 			return self:authenticateAsync():andThen(function ()
 				local requestData = {
 					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{userId=tostring(robloxUserId)};
@@ -282,8 +284,6 @@ do -- Events
 		end
 
 		function PopJamAPI:isUserRegisteredForEventAsync(robloxUserId, eventId)
-			assert(lib.isRobloxUserId(robloxUserId), "Invalid Roblox User Id")
-			assert(RunService:IsServer())
 			return self:getUserStatusForEventAsync(robloxUserId, eventId):andThen(function (userStatusResult)
 				return Promise.resolve(userStatusResult:isRegistered())
 			end, function (err)
