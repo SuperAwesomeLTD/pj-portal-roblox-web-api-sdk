@@ -1,4 +1,4 @@
-VERSION = 1.0.0
+VERSION = 1.1.0
 OUTPUT = PopJam-Portal-Roblox-Web-API-SDK-v$(VERSION).rbxmx
 
 ROJO = rojo
