@@ -104,7 +104,7 @@ function PopJamAPI.new(urlBase, mainToken)
 		_jwtTimestamp = nil;
 	}, PopJamAPI)
 	if self._mainToken then
-		self:authenticate(true)
+		self:authenticateAsync(true)
 	end
 	return self
 end
@@ -156,7 +156,7 @@ do -- Authenticate and JWT methods
 		return headers
 	end
 
-	function PopJamAPI:authenticate(override)
+	function PopJamAPI:authenticateAsync(override)
 		-- If the JWT is still good, then this is a no-op.
 		if self:isJWTAuthenticated() and not override then return Promise.resolve(self._jwt) end
 		
@@ -198,13 +198,17 @@ do -- Authenticate and JWT methods
 		end)
 		--:catch(self.handleAuthFailure)
 		
-		-- Remember the promise so that if something else calls :authenticate(), it uses
+		-- Remember the promise so that if something else calls :authenticateAsync(), it uses
 		-- the in-progress promise we just built. When it resolves, forget about it.
 		self._authPromise = promise
 		promise:finally(function ()
 			self._authPromise = nil
 		end)
 		return self._authPromise
+	end
+
+	function PopJamAPI:authenticate(...)
+		return self:authenticateAsync(...):expect()
 	end
 end
 
@@ -216,8 +220,8 @@ do -- Events
 		return self:getUrlBase() .. PopJamAPI.EP_UPCOMING_EVENTS
 	end
 	
-	function PopJamAPI:getUpcomingEvents()
-		return self:authenticate():andThen(function (_jwt)
+	function PopJamAPI:getUpcomingEventsAsync()
+		return self:authenticateAsync():andThen(function (_jwt)
 			local requestData = {
 				["Url"] = self:getUpcomingEventsEndpoint();
 				["Headers"] = self:getHeaders(true);
@@ -235,6 +239,10 @@ do -- Events
 		end)
 	end
 
+	function PopJamAPI:getUpcomingEvents(...)
+		return self:getUpcomingEventsAsync(...):expect()
+	end
+
 	do -- User event registration status
 		local UserStatusResult = require(script:WaitForChild("UserStatusResult"))
 
@@ -242,8 +250,8 @@ do -- Events
 			return self:getUrlBase() .. "/" .. eventId .. PopJamEvent.EP_USER_STATUS
 		end
 
-		function PopJamAPI:getUserStatusForEvent(username, eventId)
-			return self:authenticate():andThen(function ()
+		function PopJamAPI:getUserStatusForEventAsync(username, eventId)
+			return self:authenticateAsync():andThen(function ()
 				local requestData = {
 					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{username=username};
 					["Headers"] = self:getHeaders(true);
@@ -266,9 +274,13 @@ do -- Events
 			end)
 		end
 
+		function PopJamAPI:getUserStatusForEvent(...)
+			return self:getUserStatusForEventAsync(...):expect()
+		end
+
 		function PopJamAPI:isUserRegisteredForEventAsync(username, eventId)
 			assert(RunService:IsServer())
-			return self:getUserStatusForEvent(username, eventId):andThen(function (userStatusResult)
+			return self:getUserStatusForEventAsync(username, eventId):andThen(function (userStatusResult)
 				return Promise.resolve(userStatusResult:isRegistered())
 			end, function (err)
 				warn(tostring(err))
@@ -289,9 +301,9 @@ do -- Events
 			return self:getUrlBase() .. "/" .. challengeId .. PopJamAPI.EP_CHALLENGE_STATUS
 		end
 
-		function PopJamAPI:getChallengeStatusForUser(challengeId, username)
+		function PopJamAPI:getChallengeStatusForUserAsync(challengeId, username)
 			assert(typeof(challengeId) == "string" and challengeId:len() > 0, "challengeId should be a nonempty string")
-			return self:authenticate():andThen(function ()
+			return self:authenticateAsync():andThen(function ()
 				local requestData = {
 					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{username=username};
 					["Headers"] = self:getHeaders(true);
@@ -313,9 +325,13 @@ do -- Events
 			end)
 		end
 
+		function PopJamAPI:getChallengeStatusForUser(...)
+			return self:getChallengeStatusForUserAsync(...):expect()
+		end
+
 		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, username)
 			assert(RunService:IsServer())
-			return self:getChallengeStatusForUser(challengeId, username):andThen(function (challengeStatusResult)
+			return self:getChallengeStatusForUserAsync(challengeId, username):andThen(function (challengeStatusResult)
 				print(username, "Challenge status", challengeStatusResult:isCompleted())
 				return Promise.resolve(challengeStatusResult:isCompleted())
 			end, function (err)
@@ -334,7 +350,7 @@ do -- Events
 			return typeof(setupCode) == "string" and setupCode:len() >= 6
 		end
 		
-		function PopJamAPI:getEventIdBySetupCode(setupCode)
+		function PopJamAPI:getEventIdBySetupCodeAsync(setupCode)
 			assert(isSetupCodeValid(setupCode))
 			local requestData = {
 				["Url"] = self:getUrlBase() .. PopJamAPI.EP_EVENT_SETUP .. "?" .. lib.queryString{setupCode=setupCode};
@@ -359,7 +375,11 @@ do -- Events
 			end)
 		end
 
-		function PopJamAPI:setTeleportDetailsForEvent(eventId, setupCode, placeId, privateServerId, privateServerAccessCode)
+		function PopJamAPI:getEventIdBySetupCode(...)
+			return self:getEventIdBySetupCodeAsync(...):expect()
+		end
+
+		function PopJamAPI:setTeleportDetailsForEventAsync(eventId, setupCode, placeId, privateServerId, privateServerAccessCode)
 			assert(typeof(eventId) == "string" and eventId:len() > 0, "eventId should be a nonempty string")
 			assert(isSetupCodeValid(setupCode), "valid setup code expected, got " .. tostring(setupCode))
 			assert(typeof(placeId) == "number" and math.floor(placeId) == placeId and placeId > 0, "placeId should be valid")
@@ -386,6 +406,10 @@ do -- Events
 					return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 				end
 			end)
+		end
+
+		function PopJamAPI:setTeleportDetailsForEvent(...)
+			return self:setTeleportDetailsForEventAsync(...):expect()
 		end
 	end
 end
