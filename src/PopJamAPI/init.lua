@@ -266,7 +266,7 @@ do -- Events
 			end)
 		end
 
-		function PopJamAPI:isUserRegisteredForEvent(username, eventId)
+		function PopJamAPI:isUserRegisteredForEventAsync(username, eventId)
 			assert(RunService:IsServer())
 			return self:getUserStatusForEvent(username, eventId):andThen(function (userStatusResult)
 				return Promise.resolve(userStatusResult:isRegistered())
@@ -276,8 +276,8 @@ do -- Events
 			end)
 		end
 
-		function PopJamAPI:isUserRegisteredForEventAsync(...)
-			return self:isUserRegisteredForEvent(...):await()
+		function PopJamAPI:isUserRegisteredForEvent(...)
+			return self:isUserRegisteredForEventAsync(...):expect()
 		end
 	end
 	
@@ -313,7 +313,7 @@ do -- Events
 			end)
 		end
 
-		function PopJamAPI:hasUserCompletedChallenge(challengeId, username)
+		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, username)
 			assert(RunService:IsServer())
 			return self:getChallengeStatusForUser(challengeId, username):andThen(function (challengeStatusResult)
 				print(username, "Challenge status", challengeStatusResult:isCompleted())
@@ -324,8 +324,8 @@ do -- Events
 			end)
 		end
 
-		function PopJamAPI:hasUserCompletedChallengeAsync(...)
-			return self:hasUserCompletedChallenge(...):await()
+		function PopJamAPI:hasUserCompletedChallenge(...)
+			return self:hasUserCompletedChallengeAsync(...):expect()
 		end
 	end
 	

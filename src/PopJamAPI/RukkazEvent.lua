@@ -136,13 +136,13 @@ function PopJamEvent:isHost(player)
 end
 
 do -- User event registration status
-	function PopJamEvent:isUserRegistered(username)
+	function PopJamEvent:isUserRegisteredAsync(username)
 		assert(RunService:IsServer())
 		return self.api:isUserRegisteredForEvent(username, self:getId())
 	end
 	
-	function PopJamEvent:isUserRegisteredAsync(...)
-		return self:isUserRegistered(...):await()
+	function PopJamEvent:isUserRegistered(...)
+		return self:isUserRegisteredAsync(...):expect()
 	end
 end
 
