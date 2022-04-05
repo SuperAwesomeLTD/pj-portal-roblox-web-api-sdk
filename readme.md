@@ -19,3 +19,12 @@ The module itself includes all dependencies, which is only [roblox-lua-promise](
 
 - Built using [Rojo](https://github.com/rojo-rbx/rojo) 6. The main project file is [default.project.json](default.project.json).
 - [selene](https://github.com/Kampfkarren/selene) is used as a linter. The files [selene.toml](selene.toml) and [roblox.toml](roblox.toml) are used by this.
+
+## Testing
+
+1. Run `make test`/`make test-serve` to build/sync [test.project.json](test.project.json) using Rojo.
+2. To ensure the API can load the base URL and main token for testing, do one of the following:
+   - Manually set the `DebugBaseUrl` and `DebugMainToken` attributes on the `PopJamAPI.Singleton` ModuleScript from within Studio.
+   - Publish the place to a universe owned by the [SuperAwesomeGaming](https://www.roblox.com/groups/12478861/SuperAwesomeGaming) group, ideally the [PJ Staging](https://www.roblox.com/games/8785723516) universe under the place [PopJam Portal Roblox Web API SDK (Test)](https://www.roblox.com/games/9290950551).
+3. Press Run (F8) in Studio.
+4. Inspect the Output window for test results.
