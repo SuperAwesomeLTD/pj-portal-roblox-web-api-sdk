@@ -57,10 +57,6 @@ PopJamAPI.ERR_NO_MATCHING_EVENT = "ErrNoMatchingEvent"
 -- Endpoint had a malformed response (missing JSON keys)
 PopJamAPI.ERR_BAD_RESPONSE = "ErrBadResponse"
 
-PopJamAPI.ERR_RESERVE_SERVER_FAILED = "ErrReserveServerFailed"
-
-PopJamAPI.ERR_PLACE_ID_INVALID = "ErrPlaceIdInvalid"
-
 function PopJamAPI.loadEnvironment(name)
 	assert(typeof(name) == "string", "name should be a string")
 	local environment = assert(PopJamAPI.Environments[name], "No such environment: " .. name)
@@ -389,58 +385,6 @@ do -- Events
 					warn("Failed to set event teleport details of event", setupCode, eventId, responseData["Body"])
 					return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 				end
-			end)
-		end
-
-		function PopJamAPI:setEventHostPlaceIdCallback(callback)
-			assert(typeof(callback) == "function", "callback should be a function")
-			self._placeIdCallback = callback
-		end
-		
-		local function isValidPlaceId(placeId)
-			return typeof(placeId) == "number" and placeId > 0 and math.floor(placeId) == placeId
-		end
-		
-		function PopJamAPI:setEventHostPlaceId(placeId)
-			assert(isValidPlaceId(placeId), PopJamAPI.ERR_PLACE_ID_INVALID)
-			self:setEventHostPlaceIdCallback(function (_eventId)
-				return placeId
-			end)
-		end
-		
-		local function generatePhonyPrivateServerAccessCode()
-			return "phony-access-code-" .. math.random(10000,99999)
-		end
-		
-		local function generatePhonyPrivateServerId()
-			return lib.generateGUID()
-		end
-
-		local TeleportService = game:GetService("TeleportService")
-		local reserveServerPromise = Promise.promisify(function (...)
-			if RunService:IsStudio() then
-				local privateServerAccessCode = generatePhonyPrivateServerAccessCode()
-				local privateServerId = generatePhonyPrivateServerId()
-				warn("ReserveServer was called in Studio! Generating phony teleport details:", privateServerAccessCode, privateServerId) 
-				return privateServerAccessCode, privateServerId 
-			else
-				return TeleportService:ReserveServer(...)
-			end
-		end)
-		function PopJamAPI:setupEvent(setupCode)
-			return self:getEventIdBySetupCode(setupCode):andThen(function (eventId)
-				local placeIdPromise = self._placeIdCallback and Promise.promisify(self._placeIdCallback)(eventId) or Promise.resolve(game.PlaceId)
-				return placeIdPromise:andThen(function (placeId)
-					assert(isValidPlaceId(placeId), PopJamAPI.ERR_PLACE_ID_INVALID)
-					return reserveServerPromise(placeId):catch(function (err)
-						warn(err)
-						return Promise.reject(PopJamAPI.ERR_RESERVE_SERVER_FAILED)
-					end):andThen(function (privateServerAccessCode, privateServerId)
-						return self:setTeleportDetailsForEvent(eventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
-							return Promise.resolve(placeId, eventId, privateServerId, privateServerAccessCode)
-						end)
-					end)
-				end)
 			end)
 		end
 	end
