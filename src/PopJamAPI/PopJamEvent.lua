@@ -1,7 +1,13 @@
 local RunService = game:GetService("RunService")
+local UserService = game:GetService("UserService")
 
 local lib = require(script.Parent.Parent:WaitForChild("lib"))
+local Promise = lib.Promise
 local Timer = lib.Timer
+
+local getUserInfosByUserIdsAsyncPromise = Promise.promisify(function (...)
+	return UserService:GetUserInfosByUserIdsAsync(...)
+end)
 
 local PopJamEvent = {}
 PopJamEvent.__index = PopJamEvent
@@ -34,7 +40,7 @@ function PopJamEvent.new(api, payload)
 	-- TODO: add place ID and private server access code fields (do not replicate)
 	self.placeId = payload["metadata"] and payload["metadata"]["placeId"]
 	self.privateServerAccessCode = payload["metadata"] and payload["metadata"]["serverAccessCode"]
-	self.robloxUsername = payload["robloxId"]
+	self.robloxUserId = payload["robloxUserId"]
 	self.hasTeleportData = (self.placeId and self.privateServerAccessCode) and true or false 
 	
 
@@ -61,8 +67,40 @@ function PopJamEvent:isFeatured()
 	return self.featured
 end
 
-function PopJamEvent:getHostName()
-	return self.robloxUsername or "(No host)"
+function PopJamEvent:getHostUserInfoAsync()
+	local robloxUserId = self.robloxUserId
+	return getUserInfosByUserIdsAsyncPromise({self.robloxUserId}):andThen(function (result)
+		for _, userInfo in pairs(result) do
+			if userInfo["Id"] == robloxUserId then
+				return Promise.resolve(userInfo)
+			end
+		end
+		return Promise.reject("Could not get host user info")
+	end)
+end
+
+function PopJamEvent:getHostUserInfo(...)
+	return PopJamEvent:getHostUserInfoAsync(...):expect()
+end
+
+function PopJamEvent:getHostUsernameAsync()
+	return self:getHostUserInfoAsync():andThen(function (userInfo)
+		return Promise.resolve(assert(userInfo["Username"], "Username expected"))
+	end)
+end
+
+function PopJamEvent:getHostUsername()
+	return self:getHostUsernameAsync():expect()
+end
+
+function PopJamEvent:getHostDisplayNameAsync()
+	return self:getHostUserInfoAsync():andThen(function (userInfo)
+		return Promise.resolve(assert(userInfo["DisplayName"], "DisplayName expected"))
+	end)
+end
+
+function PopJamEvent:getHostDisplayName()
+	return self:getHostDisplayNameAsync():expect()
 end
 
 function PopJamEvent:getDescription()
@@ -132,13 +170,14 @@ function PopJamEvent:timeRemaining()
 end
 
 function PopJamEvent:isHost(player)
-	return self.robloxUsername:lower() == player.Name:lower()
+	return self.robloxUserId == player.UserId
 end
 
 do -- User event registration status
-	function PopJamEvent:isUserRegisteredAsync(username)
+	function PopJamEvent:isUserRegisteredAsync(robloxUserId)
+		lib.assertRobloxUserId(robloxUserId)
 		assert(RunService:IsServer())
-		return self.api:isUserRegisteredForEventAsync(username, self:getId())
+		return self.api:isUserRegisteredForEventAsync(robloxUserId, self:getId())
 	end
 	
 	function PopJamEvent:isUserRegistered(...)

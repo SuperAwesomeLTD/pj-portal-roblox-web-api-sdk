@@ -39,4 +39,24 @@ do
 	end)
 end
 
+do
+	function lib.isInt(n)
+		return math.floor(n) == n
+	end
+
+	function lib.isPositiveInteger(n)
+		return typeof(n) == "number" and n > 0 and lib.isInt(n)
+	end
+	lib.isRobloxPlaceId = lib.isPositiveInteger
+	lib.isRobloxUserId = lib.isPositiveInteger
+
+	function lib.assertRobloxPlaceId(robloxPlaceId)
+		assert(lib.isRobloxPlaceId, "Invalid Roblox Place Id: " .. tostring(robloxPlaceId))
+	end
+
+	function lib.assertRobloxUserId(robloxUserId)
+		assert(lib.isRobloxUserId, "Invalid Roblox User Id: " .. tostring(robloxUserId))
+	end
+end
+
 return lib

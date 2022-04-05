@@ -55,7 +55,7 @@ PopJamAPI.ERR_STATUS_CODE = "ErrStatusCode"
 -- Endpoint did not return valid JSON
 PopJamAPI.ERR_JSON_PARSE = "ErrJsonParse"
 
--- Provided Roblox username did not have a matching PopJam user
+-- Provided Roblox user ID did not have a matching PopJam user
 PopJamAPI.ERR_POPJAM_USER_NOT_FOUND = "ErrPopJamUserNotFound"
 
 -- No event has the provided setup code
@@ -253,10 +253,10 @@ do -- Events
 			return self:getUrlBase() .. "/" .. eventId .. PopJamAPI.PopJamEvent.EP_USER_STATUS
 		end
 
-		function PopJamAPI:getUserStatusForEventAsync(username, eventId)
+		function PopJamAPI:getUserStatusForEventAsync(robloxUserId, eventId)
 			return self:authenticateAsync():andThen(function ()
 				local requestData = {
-					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{username=username};
+					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{userId=robloxUserId};
 					["Headers"] = self:getHeaders(true);
 					["Method"] = "GET";
 				}
@@ -272,7 +272,7 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(PopJamAPI.UserStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.UserStatusResult.new(self, robloxUserId, payload))
 				end)
 			end)
 		end
@@ -281,9 +281,10 @@ do -- Events
 			return self:getUserStatusForEventAsync(...):expect()
 		end
 
-		function PopJamAPI:isUserRegisteredForEventAsync(username, eventId)
+		function PopJamAPI:isUserRegisteredForEventAsync(robloxUserId, eventId)
+			assert(lib.isRobloxUserId(robloxUserId), "Invalid Roblox User Id")
 			assert(RunService:IsServer())
-			return self:getUserStatusForEventAsync(username, eventId):andThen(function (userStatusResult)
+			return self:getUserStatusForEventAsync(robloxUserId, eventId):andThen(function (userStatusResult)
 				return Promise.resolve(userStatusResult:isRegistered())
 			end, function (err)
 				warn(tostring(err))
@@ -302,11 +303,11 @@ do -- Events
 			return self:getUrlBase() .. "/" .. challengeId .. PopJamAPI.EP_CHALLENGE_STATUS
 		end
 
-		function PopJamAPI:getChallengeStatusForUserAsync(challengeId, username)
+		function PopJamAPI:getChallengeStatusForUserAsync(challengeId, robloxUserId)
 			assert(typeof(challengeId) == "string" and challengeId:len() > 0, "challengeId should be a nonempty string")
 			return self:authenticateAsync():andThen(function ()
 				local requestData = {
-					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{username=username};
+					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{userId=robloxUserId};
 					["Headers"] = self:getHeaders(true);
 					["Method"] = "GET";
 					--["Body"] = nil;
@@ -321,7 +322,7 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(self, robloxUserId, payload))
 				end)
 			end)
 		end
@@ -330,10 +331,10 @@ do -- Events
 			return self:getChallengeStatusForUserAsync(...):expect()
 		end
 
-		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, username)
+		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, robloxUserId)
 			assert(RunService:IsServer())
-			return self:getChallengeStatusForUserAsync(challengeId, username):andThen(function (challengeStatusResult)
-				print(username, "Challenge status", challengeStatusResult:isCompleted())
+			return self:getChallengeStatusForUserAsync(challengeId, robloxUserId):andThen(function (challengeStatusResult)
+				print(robloxUserId, "Challenge status", challengeStatusResult:isCompleted())
 				return Promise.resolve(challengeStatusResult:isCompleted())
 			end, function (err)
 				warn(tostring(err))

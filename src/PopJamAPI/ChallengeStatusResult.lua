@@ -1,16 +1,18 @@
 local Players = game:GetService("Players")
 
+local lib = require(script.Parent.Parent:WaitForChild("lib"))
+
 local ChallengeStatusResult = {}
 ChallengeStatusResult.__index = ChallengeStatusResult
 
-function ChallengeStatusResult.new(challengeId, username, payload)
+function ChallengeStatusResult.new(challengeId, robloxUserId, payload)
 	assert(typeof(challengeId) == "string" and challengeId:len() > 0, "challengeId must be nonempty string")
-	assert(typeof(username) == "string" and username:len() > 0, "username must be nonempty string")
+	lib.assertRobloxUserId(robloxUserId)
 	assert(typeof(payload) == "table", "payload must be a table")
 	assert(typeof(payload["completed"]) == "boolean", "payload must include boolean \"completed\"")
 	local self = setmetatable({
 		challengeId = challengeId;
-		username = username;
+		robloxUserId = robloxUserId;
 		player = nil;
 		
 		payload = payload;
@@ -22,7 +24,7 @@ end
 function ChallengeStatusResult:findPlayer()
 	if not self.player then
 		for _, player in pairs(Players:GetPlayers()) do
-			if player.Name:lower() == self.username:lower() then
+			if player.UserId == self.robloxUserId then
 				self.player = player
 				break
 			end
