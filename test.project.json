@@ -1,5 +1,5 @@
 {
-	"name": "PopJam Portal Roblox Web API SDK",
+	"name": "PopJam Portal Roblox Web API SDK (Test)",
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {
@@ -8,6 +8,9 @@
 			"PopJam Portal Roblox Web API SDK": {
 				"$path": "src",
 				"$ignoreUnknownInstances": false
+			},
+			"Tests": {
+				"$path": "test"
 			}
 		}
 	}

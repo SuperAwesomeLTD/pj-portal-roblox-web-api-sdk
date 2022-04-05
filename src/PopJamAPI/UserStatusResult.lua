@@ -3,15 +3,15 @@ local Players = game:GetService("Players")
 local UserStatusResult = {}
 UserStatusResult.__index = UserStatusResult
 
-function UserStatusResult.new(event, username, payload)
+function UserStatusResult.new(event, robloxUserId, payload)
 	assert(event, "event expected")
-	assert(typeof(username) == "string" and username:len() > 0, "username must be nonempty string")
+	assert(typeof(robloxUserId) == "number" and robloxUserId > 0 and math.floor(robloxUserId) == robloxUserId, "robloxUserId positive integer")
 	assert(typeof(payload) == "table", "payload must be a table")
 	assert(typeof(payload["registered"]) == "boolean", "payload must include boolean \"registered\"")
 	assert(typeof(payload["verified"]) == "boolean", "payload must include boolean \"verified\"")
 	local self = setmetatable({
 		event = event;
-		username = username;
+		robloxUserId = robloxUserId;
 		
 		payload = payload;
 		registered = payload["registered"];
@@ -24,7 +24,7 @@ end
 function UserStatusResult:findPlayer()
 	if not self.player then
 		for _, player in pairs(Players:GetPlayers()) do
-			if player.Name:lower() == self.username:lower() then
+			if player.UserId == self.robloxUserId then
 				self.player = player
 				break
 			end
