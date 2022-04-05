@@ -13,6 +13,14 @@ local PopJamAPI = {}
 PopJamAPI.__index = PopJamAPI
 PopJamAPI.VERSION = "1.0.0"
 
+-- ==== Modules ====
+
+PopJamAPI.Promise = Promise
+PopJamAPI.PopJamEvent = require(script:WaitForChild("PopJamEvent"))
+PopJamAPI.Pagination = require(script:WaitForChild("Pagination"))
+PopJamAPI.UserStatusResult = require(script:WaitForChild("UserStatusResult"))
+PopJamAPI.ChallengeStatusResult = require(script:WaitForChild("ChallengeStatusResult"))
+
 -- ==== Defaults ====
 
 -- Duration in seconds that the JWT returned from the /authenticate endpoint can be considered valid
@@ -213,9 +221,6 @@ do -- Authenticate and JWT methods
 end
 
 do -- Events
-	local PopJamEvent = require(script:WaitForChild("PopJamEvent"))
-	local Pagination = require(script:WaitForChild("Pagination"))
-	
 	function PopJamAPI:getUpcomingEventsEndpoint()
 		return self:getUrlBase() .. PopJamAPI.EP_UPCOMING_EVENTS
 	end
@@ -234,7 +239,7 @@ do -- Events
 				end
 
 				local payload = lib.jsonDecode(responseData["Body"])
-				return Promise.resolve(Pagination.new(self, PopJamEvent.new, payload))
+				return Promise.resolve(PopJamAPI.Pagination.new(self, PopJamAPI.PopJamEvent.new, payload))
 			end)
 		end)
 	end
@@ -244,10 +249,8 @@ do -- Events
 	end
 
 	do -- User event registration status
-		local UserStatusResult = require(script:WaitForChild("UserStatusResult"))
-
 		function PopJamAPI:getUserStatusEndpoint(eventId)
-			return self:getUrlBase() .. "/" .. eventId .. PopJamEvent.EP_USER_STATUS
+			return self:getUrlBase() .. "/" .. eventId .. PopJamAPI.PopJamEvent.EP_USER_STATUS
 		end
 
 		function PopJamAPI:getUserStatusForEventAsync(username, eventId)
@@ -269,7 +272,7 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(UserStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.UserStatusResult.new(self, username, payload))
 				end)
 			end)
 		end
@@ -294,8 +297,6 @@ do -- Events
 	end
 	
 	do  -- In-app challenges
-		local ChallengeStatusResult = require(script:WaitForChild("ChallengeStatusResult"))
-
 		function PopJamAPI:getChallengeStatusEndpoint(challengeId)
 			assert(typeof(challengeId) == "string", "challengeId should be a string")
 			return self:getUrlBase() .. "/" .. challengeId .. PopJamAPI.EP_CHALLENGE_STATUS
@@ -320,7 +321,7 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(ChallengeStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(self, username, payload))
 				end)
 			end)
 		end
@@ -394,7 +395,7 @@ do -- Events
 			headers["Content-Type"] = "application/json"
 			local requestData = {
 				["Method"] = "PATCH";
-				["Url"] = self:getUrlBase() .. "/" .. eventId .. PopJamEvent.EP_TELEPORT_DETAILS;
+				["Url"] = self:getUrlBase() .. "/" .. eventId .. PopJamAPI.PopJamEvent.EP_TELEPORT_DETAILS;
 				["Headers"] = headers;
 				["Body"] = lib.jsonEncode(requestPayload);
 			}
