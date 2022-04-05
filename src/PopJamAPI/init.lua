@@ -331,7 +331,7 @@ do -- Events
 			return self:getChallengeStatusForUserAsync(...):expect()
 		end
 
-		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, robloxUserId)
+		function PopJamAPI:hasUserCompletedChallengeAsync(robloxUserId, challengeId)
 			assert(RunService:IsServer())
 			return self:getChallengeStatusForUserAsync(challengeId, robloxUserId):andThen(function (challengeStatusResult)
 				print(robloxUserId, "Challenge status", challengeStatusResult:isCompleted())
