@@ -204,7 +204,7 @@ do -- Authenticate and JWT methods
 		promise:finally(function ()
 			self._authPromise = nil
 		end)
-		return self._authPromise
+		return promise
 	end
 
 	function PopJamAPI:authenticate(...)
