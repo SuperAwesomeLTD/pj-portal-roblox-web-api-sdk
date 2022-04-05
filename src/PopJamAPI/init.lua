@@ -256,7 +256,7 @@ do -- Events
 		function PopJamAPI:getUserStatusForEventAsync(robloxUserId, eventId)
 			return self:authenticateAsync():andThen(function ()
 				local requestData = {
-					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{userId=robloxUserId};
+					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{userId=tostring(robloxUserId)};
 					["Headers"] = self:getHeaders(true);
 					["Method"] = "GET";
 				}
@@ -307,7 +307,7 @@ do -- Events
 			assert(typeof(challengeId) == "string" and challengeId:len() > 0, "challengeId should be a nonempty string")
 			return self:authenticateAsync():andThen(function ()
 				local requestData = {
-					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{userId=robloxUserId};
+					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{userId=tostring(robloxUserId)};
 					["Headers"] = self:getHeaders(true);
 					["Method"] = "GET";
 					--["Body"] = nil;
