@@ -1,5 +1,5 @@
 local RunService = game:GetService("RunService")
-local RukkazAPI = require(script.Parent)
+local PopJamAPI = require(script.Parent)
 
 local vUseStagingInStudio = script:WaitForChild("UseStagingInStudio")
 
@@ -13,8 +13,8 @@ end
 
 local function main()
 	local environment = selectEnvironment()
-	local rukkazAPI = RukkazAPI.loadEnvironment(environment):expect()
-	return rukkazAPI
+	local popJamAPI = PopJamAPI.loadEnvironment(environment):expect()
+	return popJamAPI
 end
 
 return main()
