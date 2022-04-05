@@ -47,8 +47,8 @@ PopJamAPI.ERR_STATUS_CODE = "ErrStatusCode"
 -- Endpoint did not return valid JSON
 PopJamAPI.ERR_JSON_PARSE = "ErrJsonParse"
 
--- Provided Roblox username did nto have a matching Rukkaz user
-PopJamAPI.ERR_RUKKAZ_USER_NOT_FOUND = "ErrRukkazUserNotFound"
+-- Provided Roblox username did not have a matching PopJam user
+PopJamAPI.ERR_POPJAM_USER_NOT_FOUND = "ErrPopJamUserNotFound"
 
 -- No event has the provided setup code
 PopJamAPI.ERR_SETUP_CODE_INVALID = "ErrSetupCode"
@@ -305,7 +305,7 @@ do -- Events
 				return lib.requestAsyncPromise(requestData):andThen(function (responseData)
 					-- Must have received a 200 OK
 					if responseData["StatusCode"] == 404 then
-						return Promise.reject(PopJamAPI.ERR_RUKKAZ_USER_NOT_FOUND)
+						return Promise.reject(PopJamAPI.ERR_POPJAM_USER_NOT_FOUND)
 					elseif responseData["StatusCode"] ~= 200 then
 						--local success, payload = lib.jsonDecode(responseData["Body"])
 						return Promise.reject(self.ERR_STATUS_CODE .. responseData["StatusCode"])
