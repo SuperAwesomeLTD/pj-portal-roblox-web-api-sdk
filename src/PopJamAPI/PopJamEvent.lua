@@ -138,7 +138,7 @@ end
 do -- User event registration status
 	function PopJamEvent:isUserRegisteredAsync(username)
 		assert(RunService:IsServer())
-		return self.api:isUserRegisteredForEvent(username, self:getId())
+		return self.api:isUserRegisteredForEventAsync(username, self:getId())
 	end
 	
 	function PopJamEvent:isUserRegistered(...)
