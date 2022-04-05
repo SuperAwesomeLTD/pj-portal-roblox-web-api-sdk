@@ -11,6 +11,7 @@ local Promise = lib.Promise
 
 local RukkazAPI = {}
 RukkazAPI.__index = RukkazAPI
+RukkazAPI.VERSION = "1.0.0"
 
 -- ==== Defaults ====
 
