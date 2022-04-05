@@ -1,6 +1,6 @@
 --[[
 
-Rukkaz Web API
+PopJam Web API
 
 ]]
 
@@ -9,18 +9,27 @@ local RunService = game:GetService("RunService")
 local lib = require(script.Parent:WaitForChild("lib"))
 local Promise = lib.Promise
 
-local RukkazAPI = {}
-RukkazAPI.__index = RukkazAPI
+local PopJamAPI = {}
+PopJamAPI.__index = PopJamAPI
+PopJamAPI.VERSION = "1.0.0"
+
+-- ==== Modules ====
+
+PopJamAPI.Promise = Promise
+PopJamAPI.PopJamEvent = require(script:WaitForChild("PopJamEvent"))
+PopJamAPI.Pagination = require(script:WaitForChild("Pagination"))
+PopJamAPI.UserStatusResult = require(script:WaitForChild("UserStatusResult"))
+PopJamAPI.ChallengeStatusResult = require(script:WaitForChild("ChallengeStatusResult"))
 
 -- ==== Defaults ====
 
 -- Duration in seconds that the JWT returned from the /authenticate endpoint can be considered valid
-RukkazAPI.DEFAULT_JWT_TIMEOUT = 30
+PopJamAPI.DEFAULT_JWT_TIMEOUT = 30
 
 -- ==== Environments ====
 
-RukkazAPI.GROUP_ID = 12478861
-RukkazAPI.Environments = {
+PopJamAPI.GROUP_ID = 12478861
+PopJamAPI.Environments = {
 	["Production"] = {
 		urlBase = "https://sa-rukkaz-gamewithme-integrations.rukkaz.com";
 		mainTokenAssetId = 7650250675;
@@ -33,66 +42,62 @@ RukkazAPI.Environments = {
 
 -- ==== Endpoints ====
 
-RukkazAPI.EP_AUTHENTICATE = "/authenticate"
-RukkazAPI.EP_UPCOMING_EVENTS = "/upcoming"
-RukkazAPI.EP_CHALLENGE_STATUS = "/challenge-status"
-RukkazAPI.EP_EVENT_SETUP = "/event-setup"
+PopJamAPI.EP_AUTHENTICATE = "/authenticate"
+PopJamAPI.EP_UPCOMING_EVENTS = "/upcoming"
+PopJamAPI.EP_CHALLENGE_STATUS = "/challenge-status"
+PopJamAPI.EP_EVENT_SETUP = "/event-setup"
 
 -- ==== Errors ====
 
 -- Endpoint returned a non-200 response.
-RukkazAPI.ERR_STATUS_CODE = "ErrStatusCode"
+PopJamAPI.ERR_STATUS_CODE = "ErrStatusCode"
 
 -- Endpoint did not return valid JSON
-RukkazAPI.ERR_JSON_PARSE = "ErrJsonParse"
+PopJamAPI.ERR_JSON_PARSE = "ErrJsonParse"
 
--- Provided Roblox username did nto have a matching Rukkaz user
-RukkazAPI.ERR_RUKKAZ_USER_NOT_FOUND = "ErrRukkazUserNotFound"
+-- Provided Roblox username did not have a matching PopJam user
+PopJamAPI.ERR_POPJAM_USER_NOT_FOUND = "ErrPopJamUserNotFound"
 
 -- No event has the provided setup code
-RukkazAPI.ERR_SETUP_CODE_INVALID = "ErrSetupCode"
-RukkazAPI.ERR_NO_MATCHING_EVENT = "ErrNoMatchingEvent"
+PopJamAPI.ERR_SETUP_CODE_INVALID = "ErrSetupCode"
+PopJamAPI.ERR_NO_MATCHING_EVENT = "ErrNoMatchingEvent"
 
 -- Endpoint had a malformed response (missing JSON keys)
-RukkazAPI.ERR_BAD_RESPONSE = "ErrBadResponse"
+PopJamAPI.ERR_BAD_RESPONSE = "ErrBadResponse"
 
-RukkazAPI.ERR_RESERVE_SERVER_FAILED = "ErrReserveServerFailed"
-
-RukkazAPI.ERR_PLACE_ID_INVALID = "ErrPlaceIdInvalid"
-
-function RukkazAPI.loadEnvironment(name)
+function PopJamAPI.loadEnvironment(name)
 	assert(typeof(name) == "string", "name should be a string")
-	local environment = assert(RukkazAPI.Environments[name], "No such environment: " .. name)
+	local environment = assert(PopJamAPI.Environments[name], "No such environment: " .. name)
 	local urlBase = assert(environment.urlBase, "Environment missing urlBase")
-	local useMainToken = RukkazAPI.isOfficial()
+	local useMainToken = PopJamAPI.isOfficial()
 	if useMainToken then
 		return Promise.new(function (resolve, _reject, _onCancel)
 			resolve(require(assert(environment.mainTokenAssetId, "Environment missing mainTokenAssetId")))
 		end):andThen(function (mainToken)
-			local api = RukkazAPI.new(urlBase, mainToken)
+			local api = PopJamAPI.new(urlBase, mainToken)
 			api._environment = name
 			return Promise.resolve(api)
 		end)
 	else
-		local api = RukkazAPI.new(urlBase, nil)
+		local api = PopJamAPI.new(urlBase, nil)
 		api._environment = name
 		return Promise.resolve(api)
 	end
 end
 
-function RukkazAPI.isOfficial()
-	return game.CreatorType == Enum.CreatorType.Group and game.CreatorId == RukkazAPI.GROUP_ID
+function PopJamAPI.isOfficial()
+	return game.CreatorType == Enum.CreatorType.Group and game.CreatorId == PopJamAPI.GROUP_ID
 end
 
-function RukkazAPI.production()
-	return RukkazAPI.loadEnvironment("Production")
+function PopJamAPI.production()
+	return PopJamAPI.loadEnvironment("Production")
 end
 
-function RukkazAPI.staging()
-	return RukkazAPI.loadEnvironment("Staging")
+function PopJamAPI.staging()
+	return PopJamAPI.loadEnvironment("Staging")
 end
 
-function RukkazAPI.new(urlBase, mainToken)
+function PopJamAPI.new(urlBase, mainToken)
 	assert(typeof(urlBase) == "string", "urlBase should be a string")
 	--assert(typeof(mainToken) == "string")
 	local self = setmetatable({
@@ -105,53 +110,53 @@ function RukkazAPI.new(urlBase, mainToken)
 		_jwt = nil;
 		-- Timestamp (os.time()) that the JWT was received
 		_jwtTimestamp = nil;
-	}, RukkazAPI)
+	}, PopJamAPI)
 	if self._mainToken then
-		self:authenticate(true)
+		self:authenticateAsync(true)
 	end
 	return self
 end
 
-function RukkazAPI:getUrlBase()
+function PopJamAPI:getUrlBase()
 	return self._urlBase
 end
 
-function RukkazAPI:getMainToken()
+function PopJamAPI:getMainToken()
 	return self._mainToken
 end
 
-function RukkazAPI:getEnvironment()
+function PopJamAPI:getEnvironment()
 	return self._environment
 end
 
 do -- Authenticate and JWT methods
-	function RukkazAPI.getJWTTimeout()
-		return RukkazAPI.DEFAULT_JWT_TIMEOUT
+	function PopJamAPI.getJWTTimeout()
+		return PopJamAPI.DEFAULT_JWT_TIMEOUT
 	end
 
 	--- Confidence check for JWT value
-	function RukkazAPI.isJWT(value)
+	function PopJamAPI.isJWT(value)
 		return typeof(value) == "string"
 	end
 	
-	function RukkazAPI:getAuthenticateEndpoint()
-		return self:getUrlBase() .. RukkazAPI.EP_AUTHENTICATE
+	function PopJamAPI:getAuthenticateEndpoint()
+		return self:getUrlBase() .. PopJamAPI.EP_AUTHENTICATE
 	end
 
-	function RukkazAPI:isJWTValid()
-		local timeout = RukkazAPI.getJWTTimeout()
+	function PopJamAPI:isJWTValid()
+		local timeout = PopJamAPI.getJWTTimeout()
 		return assert(self._jwtTimestamp, "JWT Timestamp missing") + timeout > os.time()
 	end
 
-	function RukkazAPI:isJWTAuthenticated()
+	function PopJamAPI:isJWTAuthenticated()
 		return self._jwt and self:isJWTValid()
 	end
 	
-	function RukkazAPI:getAuthorizationHeader()
+	function PopJamAPI:getAuthorizationHeader()
 		return ("Bearer %s"):format(self._jwt)
 	end
 	
-	function RukkazAPI:getHeaders(includeAuth)
+	function PopJamAPI:getHeaders(includeAuth)
 		local headers = {}
 		if includeAuth then
 			headers["Authorization"] = self:getAuthorizationHeader();
@@ -159,7 +164,7 @@ do -- Authenticate and JWT methods
 		return headers
 	end
 
-	function RukkazAPI:authenticate(override)
+	function PopJamAPI:authenticateAsync(override)
 		-- If the JWT is still good, then this is a no-op.
 		if self:isJWTAuthenticated() and not override then return Promise.resolve(self._jwt) end
 		
@@ -184,43 +189,44 @@ do -- Authenticate and JWT methods
 		:andThen(function (responseData)
 			-- Must have received a 200 OK
 			if responseData["StatusCode"] ~= 200 then
-				warn("RukkazAPI auth failed")
-				return Promise.reject(RukkazAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
+				warn("PopJamAPI auth failed")
+				return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 			end
 			
 			-- Check for existence of string "token" key in response
 			local payload = lib.jsonDecode(responseData["Body"])
 			local token = payload["token"]
-			if RukkazAPI.isJWT(token) then
+			if PopJamAPI.isJWT(token) then
 				self._jwt = token
 				self._jwtTimestamp = os.time()
 				return Promise.resolve(token)
 			else
-				return Promise.reject(RukkazAPI.ERR_BAD_RESPONSE)
+				return Promise.reject(PopJamAPI.ERR_BAD_RESPONSE)
 			end
 		end)
 		--:catch(self.handleAuthFailure)
 		
-		-- Remember the promise so that if something else calls :authenticate(), it uses
+		-- Remember the promise so that if something else calls :authenticateAsync(), it uses
 		-- the in-progress promise we just built. When it resolves, forget about it.
 		self._authPromise = promise
 		promise:finally(function ()
 			self._authPromise = nil
 		end)
-		return self._authPromise
+		return promise
+	end
+
+	function PopJamAPI:authenticate(...)
+		return self:authenticateAsync(...):expect()
 	end
 end
 
 do -- Events
-	local RukkazEvent = require(script:WaitForChild("RukkazEvent"))
-	local Pagination = require(script:WaitForChild("Pagination"))
-	
-	function RukkazAPI:getUpcomingEventsEndpoint()
-		return self:getUrlBase() .. RukkazAPI.EP_UPCOMING_EVENTS
+	function PopJamAPI:getUpcomingEventsEndpoint()
+		return self:getUrlBase() .. PopJamAPI.EP_UPCOMING_EVENTS
 	end
 	
-	function RukkazAPI:getUpcomingEvents()
-		return self:authenticate():andThen(function (_jwt)
+	function PopJamAPI:getUpcomingEventsAsync()
+		return self:authenticateAsync():andThen(function (_jwt)
 			local requestData = {
 				["Url"] = self:getUpcomingEventsEndpoint();
 				["Headers"] = self:getHeaders(true);
@@ -229,24 +235,26 @@ do -- Events
 			return lib.requestAsyncPromise(requestData):andThen(function (responseData)
 				-- Must have received a 200 OK
 				if responseData["StatusCode"] ~= 200 then
-					return Promise.reject(RukkazAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
+					return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 				end
 
 				local payload = lib.jsonDecode(responseData["Body"])
-				return Promise.resolve(Pagination.new(self, RukkazEvent.new, payload))
+				return Promise.resolve(PopJamAPI.Pagination.new(self, PopJamAPI.PopJamEvent.new, payload))
 			end)
 		end)
 	end
 
-	do -- User event registration status
-		local UserStatusResult = require(script:WaitForChild("UserStatusResult"))
+	function PopJamAPI:getUpcomingEvents(...)
+		return self:getUpcomingEventsAsync(...):expect()
+	end
 
-		function RukkazAPI:getUserStatusEndpoint(eventId)
-			return self:getUrlBase() .. "/" .. eventId .. RukkazEvent.EP_USER_STATUS
+	do -- User event registration status
+		function PopJamAPI:getUserStatusEndpoint(eventId)
+			return self:getUrlBase() .. "/" .. eventId .. PopJamAPI.PopJamEvent.EP_USER_STATUS
 		end
 
-		function RukkazAPI:getUserStatusForEvent(username, eventId)
-			return self:authenticate():andThen(function ()
+		function PopJamAPI:getUserStatusForEventAsync(username, eventId)
+			return self:authenticateAsync():andThen(function ()
 				local requestData = {
 					["Url"] = self:getUserStatusEndpoint(eventId) .. "?" .. lib.queryString{username=username};
 					["Headers"] = self:getHeaders(true);
@@ -264,14 +272,18 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(UserStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.UserStatusResult.new(self, username, payload))
 				end)
 			end)
 		end
 
-		function RukkazAPI:isUserRegisteredForEvent(username, eventId)
+		function PopJamAPI:getUserStatusForEvent(...)
+			return self:getUserStatusForEventAsync(...):expect()
+		end
+
+		function PopJamAPI:isUserRegisteredForEventAsync(username, eventId)
 			assert(RunService:IsServer())
-			return self:getUserStatusForEvent(username, eventId):andThen(function (userStatusResult)
+			return self:getUserStatusForEventAsync(username, eventId):andThen(function (userStatusResult)
 				return Promise.resolve(userStatusResult:isRegistered())
 			end, function (err)
 				warn(tostring(err))
@@ -279,22 +291,20 @@ do -- Events
 			end)
 		end
 
-		function RukkazAPI:isUserRegisteredForEventAsync(...)
-			return self:isUserRegisteredForEvent(...):await()
+		function PopJamAPI:isUserRegisteredForEvent(...)
+			return self:isUserRegisteredForEventAsync(...):expect()
 		end
 	end
 	
 	do  -- In-app challenges
-		local ChallengeStatusResult = require(script:WaitForChild("ChallengeStatusResult"))
-
-		function RukkazAPI:getChallengeStatusEndpoint(challengeId)
+		function PopJamAPI:getChallengeStatusEndpoint(challengeId)
 			assert(typeof(challengeId) == "string", "challengeId should be a string")
-			return self:getUrlBase() .. "/" .. challengeId .. RukkazAPI.EP_CHALLENGE_STATUS
+			return self:getUrlBase() .. "/" .. challengeId .. PopJamAPI.EP_CHALLENGE_STATUS
 		end
 
-		function RukkazAPI:getChallengeStatusForUser(challengeId, username)
+		function PopJamAPI:getChallengeStatusForUserAsync(challengeId, username)
 			assert(typeof(challengeId) == "string" and challengeId:len() > 0, "challengeId should be a nonempty string")
-			return self:authenticate():andThen(function ()
+			return self:authenticateAsync():andThen(function ()
 				local requestData = {
 					["Url"] = self:getChallengeStatusEndpoint(challengeId) .. "?" .. lib.queryString{username=username};
 					["Headers"] = self:getHeaders(true);
@@ -304,21 +314,25 @@ do -- Events
 				return lib.requestAsyncPromise(requestData):andThen(function (responseData)
 					-- Must have received a 200 OK
 					if responseData["StatusCode"] == 404 then
-						return Promise.reject(RukkazAPI.ERR_RUKKAZ_USER_NOT_FOUND)
+						return Promise.reject(PopJamAPI.ERR_POPJAM_USER_NOT_FOUND)
 					elseif responseData["StatusCode"] ~= 200 then
 						--local success, payload = lib.jsonDecode(responseData["Body"])
 						return Promise.reject(self.ERR_STATUS_CODE .. responseData["StatusCode"])
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(ChallengeStatusResult.new(self, username, payload))
+					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(self, username, payload))
 				end)
 			end)
 		end
 
-		function RukkazAPI:hasUserCompletedChallenge(challengeId, username)
+		function PopJamAPI:getChallengeStatusForUser(...)
+			return self:getChallengeStatusForUserAsync(...):expect()
+		end
+
+		function PopJamAPI:hasUserCompletedChallengeAsync(challengeId, username)
 			assert(RunService:IsServer())
-			return self:getChallengeStatusForUser(challengeId, username):andThen(function (challengeStatusResult)
+			return self:getChallengeStatusForUserAsync(challengeId, username):andThen(function (challengeStatusResult)
 				print(username, "Challenge status", challengeStatusResult:isCompleted())
 				return Promise.resolve(challengeStatusResult:isCompleted())
 			end, function (err)
@@ -327,8 +341,8 @@ do -- Events
 			end)
 		end
 
-		function RukkazAPI:hasUserCompletedChallengeAsync(...)
-			return self:hasUserCompletedChallenge(...):await()
+		function PopJamAPI:hasUserCompletedChallenge(...)
+			return self:hasUserCompletedChallengeAsync(...):expect()
 		end
 	end
 	
@@ -337,32 +351,36 @@ do -- Events
 			return typeof(setupCode) == "string" and setupCode:len() >= 6
 		end
 		
-		function RukkazAPI:getEventIdBySetupCode(setupCode)
+		function PopJamAPI:getEventIdBySetupCodeAsync(setupCode)
 			assert(isSetupCodeValid(setupCode))
 			local requestData = {
-				["Url"] = self:getUrlBase() .. RukkazAPI.EP_EVENT_SETUP .. "?" .. lib.queryString{setupCode=setupCode};
+				["Url"] = self:getUrlBase() .. PopJamAPI.EP_EVENT_SETUP .. "?" .. lib.queryString{setupCode=setupCode};
 				["Method"] = "GET";
 				["Headers"] = self:getHeaders(false);
 			}
 			return lib.requestAsyncPromise(requestData):andThen(function (responseData)
 				local payload = lib.jsonDecode(responseData["Body"])
-				assert(payload, RukkazAPI.ERR_JSON_PARSE)
+				assert(payload, PopJamAPI.ERR_JSON_PARSE)
 				if responseData["StatusCode"] == 200 then
 					local eventId = payload["id"]
 					assert(typeof(eventId) == "string" and eventId:len() > 0, "eventId should be a nonempty string")
 					return Promise.resolve(eventId)
 				elseif responseData["StatusCode"] == 400 then
 					warn(table.concat(payload["message"],"\n"))
-					return Promise.reject(RukkazAPI.ERR_SETUP_CODE_INVALID)
+					return Promise.reject(PopJamAPI.ERR_SETUP_CODE_INVALID)
 				elseif responseData["StatusCode"] == 404 then
-					return Promise.reject(RukkazAPI.ERR_NO_MATCHING_EVENT)
+					return Promise.reject(PopJamAPI.ERR_NO_MATCHING_EVENT)
 				else
-					return Promise.reject(RukkazAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
+					return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 				end
 			end)
 		end
 
-		function RukkazAPI:setTeleportDetailsForEvent(eventId, setupCode, placeId, privateServerId, privateServerAccessCode)
+		function PopJamAPI:getEventIdBySetupCode(...)
+			return self:getEventIdBySetupCodeAsync(...):expect()
+		end
+
+		function PopJamAPI:setTeleportDetailsForEventAsync(eventId, setupCode, placeId, privateServerId, privateServerAccessCode)
 			assert(typeof(eventId) == "string" and eventId:len() > 0, "eventId should be a nonempty string")
 			assert(isSetupCodeValid(setupCode), "valid setup code expected, got " .. tostring(setupCode))
 			assert(typeof(placeId) == "number" and math.floor(placeId) == placeId and placeId > 0, "placeId should be valid")
@@ -377,7 +395,7 @@ do -- Events
 			headers["Content-Type"] = "application/json"
 			local requestData = {
 				["Method"] = "PATCH";
-				["Url"] = self:getUrlBase() .. "/" .. eventId .. RukkazEvent.EP_TELEPORT_DETAILS;
+				["Url"] = self:getUrlBase() .. "/" .. eventId .. PopJamAPI.PopJamEvent.EP_TELEPORT_DETAILS;
 				["Headers"] = headers;
 				["Body"] = lib.jsonEncode(requestPayload);
 			}
@@ -386,63 +404,15 @@ do -- Events
 					return Promise.resolve(true)
 				else
 					warn("Failed to set event teleport details of event", setupCode, eventId, responseData["Body"])
-					return Promise.reject(RukkazAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
+					return Promise.reject(PopJamAPI.ERR_STATUS_CODE .. responseData["StatusCode"])
 				end
 			end)
 		end
 
-		function RukkazAPI:setEventHostPlaceIdCallback(callback)
-			assert(typeof(callback) == "function", "callback should be a function")
-			self._placeIdCallback = callback
-		end
-		
-		local function isValidPlaceId(placeId)
-			return typeof(placeId) == "number" and placeId > 0 and math.floor(placeId) == placeId
-		end
-		
-		function RukkazAPI:setEventHostPlaceId(placeId)
-			assert(isValidPlaceId(placeId), RukkazAPI.ERR_PLACE_ID_INVALID)
-			self:setEventHostPlaceIdCallback(function (_eventId)
-				return placeId
-			end)
-		end
-		
-		local function generatePhonyPrivateServerAccessCode()
-			return "phony-access-code-" .. math.random(10000,99999)
-		end
-		
-		local function generatePhonyPrivateServerId()
-			return lib.generateGUID()
-		end
-
-		local TeleportService = game:GetService("TeleportService")
-		local reserveServerPromise = Promise.promisify(function (...)
-			if RunService:IsStudio() then
-				local privateServerAccessCode = generatePhonyPrivateServerAccessCode()
-				local privateServerId = generatePhonyPrivateServerId()
-				warn("ReserveServer was called in Studio! Generating phony teleport details:", privateServerAccessCode, privateServerId) 
-				return privateServerAccessCode, privateServerId 
-			else
-				return TeleportService:ReserveServer(...)
-			end
-		end)
-		function RukkazAPI:setupEvent(setupCode)
-			return self:getEventIdBySetupCode(setupCode):andThen(function (eventId)
-				local placeIdPromise = self._placeIdCallback and Promise.promisify(self._placeIdCallback)(eventId) or Promise.resolve(game.PlaceId)
-				return placeIdPromise:andThen(function (placeId)
-					assert(isValidPlaceId(placeId), RukkazAPI.ERR_PLACE_ID_INVALID)
-					return reserveServerPromise(placeId):catch(function (err)
-						warn(err)
-						return Promise.reject(RukkazAPI.ERR_RESERVE_SERVER_FAILED)
-					end):andThen(function (privateServerAccessCode, privateServerId)
-						return self:setTeleportDetailsForEvent(eventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
-							return Promise.resolve(placeId, eventId, privateServerId, privateServerAccessCode)
-						end)
-					end)
-				end)
-			end)
+		function PopJamAPI:setTeleportDetailsForEvent(...)
+			return self:setTeleportDetailsForEventAsync(...):expect()
 		end
 	end
 end
 
-return RukkazAPI
+return PopJamAPI

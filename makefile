@@ -1,4 +1,5 @@
-OUTPUT = Rukkaz-Roblox-Web-API-SDK.rbxmx
+VERSION = 1.0.0
+OUTPUT = PopJam-Portal-Roblox-Web-API-SDK-v$(VERSION).rbxmx
 
 ROJO = rojo
 ROJO_PROJECT = default.project.json
