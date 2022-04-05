@@ -322,7 +322,7 @@ do -- Events
 					end
 
 					local payload = lib.jsonDecode(responseData["Body"])
-					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(self, robloxUserId, payload))
+					return Promise.resolve(PopJamAPI.ChallengeStatusResult.new(challengeId, robloxUserId, payload))
 				end)
 			end)
 		end
