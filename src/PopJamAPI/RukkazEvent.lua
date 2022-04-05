@@ -3,17 +3,17 @@ local RunService = game:GetService("RunService")
 local lib = require(script.Parent.Parent:WaitForChild("lib"))
 local Timer = lib.Timer
 
-local RukkazEvent = {}
-RukkazEvent.__index = RukkazEvent
+local PopJamEvent = {}
+PopJamEvent.__index = PopJamEvent
 
-RukkazEvent.EP_USER_STATUS = "/user-status"
-RukkazEvent.EP_TELEPORT_DETAILS = "/teleport-details"
+PopJamEvent.EP_USER_STATUS = "/user-status"
+PopJamEvent.EP_TELEPORT_DETAILS = "/teleport-details"
 
-function RukkazEvent.new(api, payload)
+function PopJamEvent.new(api, payload)
 	local self = setmetatable({
 		api = nil;
 		payload = nil;
-	}, RukkazEvent)
+	}, PopJamEvent)
 
 	self.api = api
 	self.payload = payload
@@ -41,35 +41,35 @@ function RukkazEvent.new(api, payload)
 	return self
 end
 
-function RukkazEvent:getId()
+function PopJamEvent:getId()
 	return self.id
 end
 
-function RukkazEvent:__tostring()
-	return ("<RukkazEvent:%s %s %s>"):format(
+function PopJamEvent:__tostring()
+	return ("<PopJamEvent:%s %s %s>"):format(
 		self:getId(),
 		self:getHostName(),
 		self:getShortDescription()
 	)
 end
 
-function RukkazEvent:getUrlBase()
+function PopJamEvent:getUrlBase()
 	return self.api:getUrlBase() .. "/" .. self:getId()
 end
 
-function RukkazEvent:isFeatured()
+function PopJamEvent:isFeatured()
 	return self.featured
 end
 
-function RukkazEvent:getHostName()
+function PopJamEvent:getHostName()
 	return self.robloxUsername or "(No host)"
 end
 
-function RukkazEvent:getDescription()
+function PopJamEvent:getDescription()
 	return self.description
 end
 
-function RukkazEvent:getShortDescription()
+function PopJamEvent:getShortDescription()
 	local desc = self:getDescription() or ""
 	local s, _e = desc:find("[\n\r]+")
 	if s then
@@ -79,29 +79,29 @@ function RukkazEvent:getShortDescription()
 	end
 end
 
-function RukkazEvent:getInstructions()
+function PopJamEvent:getInstructions()
 	return self.instructions
 end
 
-function RukkazEvent:getNumberOfRegisteredUsers()
+function PopJamEvent:getNumberOfRegisteredUsers()
 	return self.numberOfRegisteredUsers
 end
 
-function RukkazEvent:isRegistered()
+function PopJamEvent:isRegistered()
 	return self.isRegistered
 end
 
-function RukkazEvent:isEventOngoing()
+function PopJamEvent:isEventOngoing()
 	local now = os.time()
 	return self.eventTimestamp < now and now < self.endsAt
 end
 
-function RukkazEvent:isEventInFuture()
+function PopJamEvent:isEventInFuture()
 	local now = os.time()
 	return self.eventTimestamp > now
 end
 
-function RukkazEvent:getStartTimer()
+function PopJamEvent:getStartTimer()
 	if self._startTimer then
 		return self._startTimer
 	end
@@ -114,7 +114,7 @@ function RukkazEvent:getStartTimer()
 	return self._startTimer
 end
 
-function RukkazEvent:getEndTimer()
+function PopJamEvent:getEndTimer()
 	if self._endTimer then
 		return self._endTimer
 	end
@@ -127,27 +127,27 @@ function RukkazEvent:getEndTimer()
 	return self._endTimer
 end
 
-function RukkazEvent:timeRemaining()
+function PopJamEvent:timeRemaining()
 	return self.endsAt - os.time()
 end
 
-function RukkazEvent:isHost(player)
+function PopJamEvent:isHost(player)
 	return self.robloxUsername:lower() == player.Name:lower()
 end
 
 do -- User event registration status
-	function RukkazEvent:isUserRegistered(username)
+	function PopJamEvent:isUserRegistered(username)
 		assert(RunService:IsServer())
 		return self.api:isUserRegisteredForEvent(username, self:getId())
 	end
 	
-	function RukkazEvent:isUserRegisteredAsync(...)
+	function PopJamEvent:isUserRegisteredAsync(...)
 		return self:isUserRegistered(...):await()
 	end
 end
 
-function RukkazEvent:hasTeleportData()
+function PopJamEvent:hasTeleportData()
 	return self.hasTeleportData
 end
 
-return RukkazEvent
+return PopJamEvent

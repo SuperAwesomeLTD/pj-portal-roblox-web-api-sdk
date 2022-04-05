@@ -213,7 +213,7 @@ do -- Authenticate and JWT methods
 end
 
 do -- Events
-	local RukkazEvent = require(script:WaitForChild("RukkazEvent"))
+	local PopJamEvent = require(script:WaitForChild("PopJamEvent"))
 	local Pagination = require(script:WaitForChild("Pagination"))
 	
 	function PopJamAPI:getUpcomingEventsEndpoint()
@@ -234,7 +234,7 @@ do -- Events
 				end
 
 				local payload = lib.jsonDecode(responseData["Body"])
-				return Promise.resolve(Pagination.new(self, RukkazEvent.new, payload))
+				return Promise.resolve(Pagination.new(self, PopJamEvent.new, payload))
 			end)
 		end)
 	end
@@ -243,7 +243,7 @@ do -- Events
 		local UserStatusResult = require(script:WaitForChild("UserStatusResult"))
 
 		function PopJamAPI:getUserStatusEndpoint(eventId)
-			return self:getUrlBase() .. "/" .. eventId .. RukkazEvent.EP_USER_STATUS
+			return self:getUrlBase() .. "/" .. eventId .. PopJamEvent.EP_USER_STATUS
 		end
 
 		function PopJamAPI:getUserStatusForEvent(username, eventId)
@@ -378,7 +378,7 @@ do -- Events
 			headers["Content-Type"] = "application/json"
 			local requestData = {
 				["Method"] = "PATCH";
-				["Url"] = self:getUrlBase() .. "/" .. eventId .. RukkazEvent.EP_TELEPORT_DETAILS;
+				["Url"] = self:getUrlBase() .. "/" .. eventId .. PopJamEvent.EP_TELEPORT_DETAILS;
 				["Headers"] = headers;
 				["Body"] = lib.jsonEncode(requestPayload);
 			}
