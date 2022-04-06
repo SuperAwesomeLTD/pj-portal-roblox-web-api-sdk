@@ -11,7 +11,7 @@ local Promise = lib.Promise
 
 local PopJamAPI = {}
 PopJamAPI.__index = PopJamAPI
-PopJamAPI.VERSION = "1.1.0"
+PopJamAPI.VERSION = "1.1.1"
 
 -- ==== Modules ====
 

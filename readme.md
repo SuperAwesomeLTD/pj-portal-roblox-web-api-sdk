@@ -1,4 +1,4 @@
-# PopJam Portal Roblox Web API SDK v1.1.0
+# PopJam Portal Roblox Web API SDK v1.1.1
 
 This is a Roblox Lua client for the PopJam Portal's web API. It is used by the [PopJam Portal Roblox Connect Module](https://github.com/SuperAwesomeLTD/pj-portal-roblox-connect-module).
 
