@@ -40,7 +40,7 @@ function PopJamEvent.new(api, payload)
 	-- TODO: add place ID and private server access code fields (do not replicate)
 	self.placeId = payload["metadata"] and payload["metadata"]["placeId"]
 	self.privateServerAccessCode = payload["metadata"] and payload["metadata"]["serverAccessCode"]
-	self.robloxUserId = payload["robloxUserId"]
+	self.robloxUserId = tonumber(payload["robloxUserId"])
 	self.hasTeleportData = (self.placeId and self.privateServerAccessCode) and true or false 
 	
 
