@@ -54,7 +54,7 @@ end
 function PopJamEvent:__tostring()
 	return ("<PopJamEvent:%s %s %s>"):format(
 		self:getId(),
-		self:getHostName(),
+		self:getHostUserId(),
 		self:getShortDescription()
 	)
 end
@@ -67,8 +67,12 @@ function PopJamEvent:isFeatured()
 	return self.featured
 end
 
+function PopJamEvent:getHostUserId()
+	return self.robloxUserId
+end
+
 function PopJamEvent:getHostUserInfoAsync()
-	local robloxUserId = self.robloxUserId
+	local robloxUserId = self:getHostUserId()
 	return getUserInfosByUserIdsAsyncPromise({self.robloxUserId}):andThen(function (result)
 		for _, userInfo in pairs(result) do
 			if userInfo["Id"] == robloxUserId then
