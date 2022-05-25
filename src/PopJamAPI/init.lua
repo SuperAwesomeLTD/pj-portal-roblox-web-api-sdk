@@ -11,7 +11,7 @@ local Promise = lib.Promise
 
 local PopJamAPI = {}
 PopJamAPI.__index = PopJamAPI
-PopJamAPI.VERSION = "1.1.2"
+PopJamAPI.VERSION = "1.2.0"
 
 -- ==== Modules ====
 
@@ -31,8 +31,8 @@ PopJamAPI.DEFAULT_JWT_TIMEOUT = 30
 PopJamAPI.GROUP_ID = 12478861
 PopJamAPI.Environments = {
 	["Production"] = {
-		urlBase = "https://sa-rukkaz-gamewithme-integrations.rukkaz.com";
-		mainTokenAssetId = 7650250675;
+		urlBase = "https://api.gwm.popjam.com";
+		mainTokenAssetId = 9719857116;
 	};
 	["Staging"] = {
 		urlBase = "https://api.gwm.staging.popjam.com";

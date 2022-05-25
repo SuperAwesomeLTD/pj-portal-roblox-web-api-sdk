@@ -1,4 +1,4 @@
-VERSION = 1.1.2
+VERSION = 1.2.0
 OUTPUT = PopJam-Portal-Roblox-Web-API-SDK-v$(VERSION).rbxmx
 OUTPUT_TEST = PopJam-Portal-Roblox-Web-API-SDK-v$(VERSION)-Test.rbxlx
 
